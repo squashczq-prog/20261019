@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>의복 재료 탐험대 - 두더지 잡기 퀴즈 게임</title>
+  <style>
+    :root {
+      --bg-color: #eef5eb;
+      --panel-bg: #ffffff;
+      --primary: #2d6a4f;
+      --primary-hover: #1b4332;
+      --secondary: #d97706;
+      --accent: #ffb703;
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --border-color: #d1d5db;
+      --danger: #ef4444;
+      --success: #10b981;
+      --board-bg: #8c6239;
+      --hole-bg: #4a3319;
+      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 12px;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 680px;
+      background-color: var(--panel-bg);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .screen {
+      display: none;
+      flex-direction: column;
+      padding: 24px;
+      width: 100%;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      text-align: center;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--text-main);
+    }
+
+    input[type="text"], select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+      background-color: #fff;
+    }
+
+    input[type="text"]:focus, select:focus {
+      border-color: var(--primary);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      background-color: var(--primary);
+      color: white;
+      transition: all 0.2s;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 6px -1px rgba(45, 106, 79, 0.3);
+    }
+
+    .btn:hover {
+      background-color: var(--primary-hover);
+      transform: translateY(-2px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background-color: #6b7280;
+      box-shadow: 0 4px 6px -1px rgba(107, 114, 128, 0.3);
+    }
+    .btn-secondary:hover {
+      background-color: #4b5563;
+    }
+
+    .info-card {
+      background-color: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .info-card ul {
+      padding-left: 20px;
+      margin-top: 8px;
+    }
+
+    .hud {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #f3f4f6;
+      padding: 10px 16px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .hud-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .mission-box {
+      background-color: #ecfdf5;
+      border-left: 5px solid var(--primary);
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      min-height: 68px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .mission-title {
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: 0.5px;
+    }
+
+    .mission-text {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-top: 2px;
+    }
+
+    /* Game Board Grid styling */
+    .game-board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 12px;
+      aspect-ratio: 1 / 1;
+      width: 100%;
+      background-color: #523b21;
+      padding: 16px;
+      border-radius: 20px;
+      box-shadow: inset 0 4px 10px rgba(0,0,0,0.4);
+      position: relative;
+    }
+
+    .hole {
+      position: relative;
+      background-color: var(--hole-bg);
+      border-radius: 50%;
+      box-shadow: inset 0 8px 12px rgba(0,0,0,0.6);
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    /* Mole Representation using SVG inside Holes */
+    .mole {
+      position: absolute;
+      width: 80%;
+      height: 85%;
+      bottom: -100%;
+      left: 10%;
+      transition: bottom 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      pointer-events: none;
+    }
+
+    .mole.up {
+      bottom: 5%;
+      pointer-events: auto;
+    }
+
+    .mole-sign {
+      background: #ffffff;
+      border: 2px solid #374151;
+      border-radius: 8px;
+      padding: 4px 6px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: #111827;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      text-align: center;
+      white-space: nowrap;
+      margin-bottom: 2px;
+      z-index: 2;
+    }
+
+    .mole-svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Pop Effect Animation */
+    @keyframes hitPop {
+      0% { transform: scale(1); }
+      50% { transform: scale(0.8) rotate(-10deg); }
+      100% { transform: scale(1); }
+    }
+
+    .mole.hit {
+      animation: hitPop 0.2s ease-in-out;
+    }
+
+    .game-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 14px;
+      gap: 10px;
+    }
+
+    .btn-hint {
+      background-color: var(--secondary);
+      color: white;
+      padding: 10px 16px;
+      font-size: 0.95rem;
+      box-shadow: none;
+    }
+
+    .result-score-card {
+      background: linear-gradient(135deg, #2d6a4f, #1b4332);
+      color: white;
+      padding: 20px;
+      border-radius: 16px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .result-grade {
+      font-size: 3.5rem;
+      font-weight: 900;
+      color: var(--accent);
+      line-height: 1;
+      margin: 8px 0;
+    }
+
+    .review-section {
+      max-height: 220px;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 20px;
+      background-color: #fafafa;
+    }
+
+    .review-title {
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text-main);
+      font-size: 0.95rem;
+    }
+
+    .review-item {
+      font-size: 0.85rem;
+      padding: 8px;
+      border-bottom: 1px solid #edf2f7;
+    }
+    .review-item:last-child { border-bottom: none; }
+    .review-item .wrong-tag { color: var(--danger); font-weight: bold; }
+
+    .leaderboard-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 0.9rem;
+    }
+
+    .leaderboard-table th, .leaderboard-table td {
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .leaderboard-table th {
+      background-color: #e5e7eb;
+      color: var(--primary);
+    }
+
+    /* Modal Styling */
+    .modal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      padding: 20px;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 16px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+
+    .modal-content h3 {
+      margin-bottom: 10px;
+      color: var(--primary);
+    }
+
+    .modal-content p {
+      margin-bottom: 16px;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- 1. START SCREEN -->
+    <div id="start-screen" class="screen active">
+      <h1>🦔 의복 재료 탐험대</h1>
+      <p class="subtitle">중2 기술·가정 | 두더지 잡기 퀴즈 게임</p>
+
+      <div class="info-card">
+        <strong>🎮 게임 핵심 설명:</strong>
+        <ul>
+          <li>화면 전광판의 **미션 조건**에 맞는 섬유를 든 두더지를 잡으세요!</li>
+          <li><strong>Stage 1:</strong> 천연섬유(면, 마, 모, 견) 두더지 타격</li>
+          <li><strong>Stage 2:</strong> 인조섬유(레이온, 나일론, 폴리에스터 등) 두더지 타격</li>
+          <li><strong>Stage 3:</strong> 퀴즈 조건에 맞는 정확한 섬유 1개 타격</li>
+          <li>폭탄/오답 두더지를 치면 점수(-50)와 체력이 감소합니다.</li>
+        </ul>
+      </div>
+
+      <div class="form-group">
+        <label for="player-name">학생 이름 / 학번</label>
+        <input type="text" id="player-name" placeholder="예: 2학년 1반 홍길동" maxlength="20">
+      </div>
+
+      <div class="form-group">
+        <label for="difficulty">난이도 선택</label>
+        <select id="difficulty">
+          <option value="easy">쉬움 (노출시간 1.5초 / 체력 5개)</option>
+          <option value="normal" selected>보통 (노출시간 1.0초 / 체력 3개)</option>
+          <option value="hard">어려움 (노출시간 0.7초 / 체력 2개)</option>
+        </select>
+      </div>
+
+      <button class="btn" id="btn-start-game">
+        <span>🚀 탐험 시작하기</span>
+      </button>
+    </div>
+
+    <!-- 2. GAME SCREEN -->
+    <div id="game-screen" class="screen">
+      <div class="hud">
+        <div class="hud-item"><span id="hud-stage">LV 1</span></div>
+        <div class="hud-item">점수: <span id="hud-score">0</span></div>
+        <div class="hud-item">체력: <span id="hud-lives">❤️❤️❤️</span></div>
+        <div class="hud-item">⏱️ <span id="hud-timer">60</span>s</div>
+      </div>
+
+      <div class="mission-box">
+        <div class="mission-title" id="mission-title">STAGE 1 MISSION</div>
+        <div class="mission-text" id="mission-text">식물성 & 동물성 [천연섬유] 두더지를 잡으세요!</div>
+      </div>
+
+      <div class="game-board" id="game-board">
+        <!-- 9 Mole Holes dynamically instantiated -->
+      </div>
+
+      <div class="game-controls">
+        <button class="btn btn-hint" id="btn-hint">🔍 힌트 (50점 차감)</button>
+        <button class="btn btn-secondary" id="btn-pause" style="width: auto; padding: 10px 16px;">⏸️ 일시정지</button>
+      </div>
+    </div>
+
+    <!-- 3. RESULT SCREEN -->
+    <div id="result-screen" class="screen">
+      <h1>탐험 결과 리포트</h1>
+      <p class="subtitle" id="result-player-info">학생: 홍길동</p>
+
+      <div class="result-score-card">
+        <div>최종 탐험 등급</div>
+        <div class="result-grade" id="result-grade">A</div>
+        <div>총 점수: <span id="result-score">0</span>점</div>
+      </div>
+
+      <div class="review-title">📝 오답노트 & 주요 섬유 특성</div>
+      <div class="review-section" id="review-list">
+        <!-- Review items dynamically injected -->
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <button class="btn btn-secondary" id="btn-show-rank">🏆 순위표 보기</button>
+        <button class="btn" id="btn-restart">🔄 다시 도전하기</button>
+      </div>
+    </div>
+
+    <!-- LEADERBOARD MODAL -->
+    <div id="leaderboard-modal" class="modal">
+      <div class="modal-content">
+        <h3>🏆 학급 리더보드 TOP 5</h3>
+        <div style="max-height: 250px; overflow-y: auto;">
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th>순위</th>
+                <th>이름</th>
+                <th>점수</th>
+                <th>난이도</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-body">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+        <button class="btn" id="btn-close-rank" style="margin-top: 16px;">닫기</button>
+      </div>
+    </div>
+
+    <!-- GENERIC MESSAGE MODAL -->
+    <div id="msg-modal" class="modal">
+      <div class="modal-content">
+        <h3 id="msg-title">알림</h3>
+        <p id="msg-text">메시지 내용</p>
+        <button class="btn" id="btn-msg-close">확인</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Web Audio API Sound Synthesizer (No external media assets)
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) {
+            this.ctx = new AudioContext();
+          }
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playTone(freq, duration, type = 'sine', gainVal = 0.1) {
+        if (!this.ctx) return;
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+          gain.gain.setValueAtTime(gainVal, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.00001, this.ctx.currentTime + duration);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start();
+          osc.stop(this.ctx.currentTime + duration);
+        } catch (e) {
+          console.warn("Audio Context failure", e);
+        }
+      }
+
+      playHitCorrect() {
+        this.init();
+        this.playTone(523.25, 0.1, 'triangle', 0.2); // C5
+        setTimeout(() => this.playTone(659.25, 0.15, 'triangle', 0.2), 80); // E5
+      }
+
+      playHitWrong() {
+        this.init();
+        this.playTone(220, 0.15, 'sawtooth', 0.2); // A3
+        setTimeout(() => this.playTone(174.61, 0.25, 'sawtooth', 0.2), 100); // F3
+      }
+
+      playHint() {
+        this.init();
+        this.playTone(880, 0.1, 'sine', 0.1);
+        setTimeout(() => this.playTone(1174.66, 0.15, 'sine', 0.1), 100);
+      }
+
+      playGameOver() {
+        this.init();
+        this.playTone(300, 0.2, 'sawtooth', 0.2);
+        setTimeout(() => this.playTone(250, 0.2, 'sawtooth', 0.2), 150);
+        setTimeout(() => this.playTone(200, 0.4, 'sawtooth', 0.2), 300);
+      }
+
+      playStageClear() {
+        this.init();
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, idx) => {
+          setTimeout(() => this.playTone(freq, 0.15, 'triangle', 0.15), idx * 100);
+        });
+      }
+    }
+
+    const sound = new SoundEngine();
+
+    // Educational Fiber Database
+    const FIBER_DATA = [
+      { id: 'cotton', name: '면', category: 'natural', desc: '흡습성이 좋고 위생적이며 세탁에 강함 (씨앗털 섬유)', icon: '👕' },
+      { id: 'linen', name: '마(모시/베)', category: 'natural', desc: '통기성이 뛰어어나 시원하며 구김이 잘 감 (줄기 섬유)', icon: '🧺' },
+      { id: 'wool', name: '모(양모)', category: 'natural', desc: '보온성이 크고 탄력이 좋으나 열/알칼리에 약함 (동물 털)', icon: '🐑' },
+      { id: 'silk', name: '견(비단)', category: 'natural', desc: '광택이 우수하고 부드러우나 햇빛에 변색되기 쉬움 (누에고치)', icon: '🦋' },
+      { id: 'rayon', name: '레이온', category: 'synthetic', desc: '목재 파이프 재료, 촉감이 부드럽고 정전기 적으나 물에 약함', icon: '✨' },
+      { id: 'nylon', name: '나일론', category: 'synthetic', desc: '질기고 마찰에 강한 최초의 합성섬유 (양말, 레깅스)', icon: '🧦' },
+      { id: 'polyester', name: '폴리에스터', category: 'synthetic', desc: '구김이 잘 가지 않고 가장 많이 쓰이는 합성섬유 (겉옷)', icon: '👔' },
+      { id: 'acrylic', name: '아크릴', category: 'synthetic', desc: '모(양모)와 비슷하여 따뜻하고 가벼움 (니트, 스웨터)', icon: '🧶' },
+      { id: 'spandex', name: '폴리우레탄', category: 'synthetic', desc: '신축성이 매우 뛰어남 (수영복, 에어로빅복)', icon: '🩱' }
+    ];
+
+    const QUIZ_QUESTIONS = [
+      { q: "흡습성이 좋고 세탁에 강하며, 씨앗털로 만든 식물성 섬유는?", answer: "면" },
+      { q: "통기성이 좋아 여름철 옷감으로 쓰이며, 구김이 잘 가는 줄기 섬유는?", answer: "마(모시/베)" },
+      { q: "보온성이 뛰어나고 곱슬거리는 성질(크림프)이 있는 동물성 섬유는?", answer: "모(양모)" },
+      { q: "누에고치에서 얻으며 촉감이 부드럽고 고급스러운 광택을 지닌 섬유는?", answer: "견(비단)" },
+      { q: "마찰에 매우 강하고 질겨 양말이나 스타킹에 많이 쓰이는 합성섬유는?", answer: "나일론" },
+      { q: "구김이 거의 가지 않아 양복이나 학생복에 가장 널리 쓰이는 합성섬유는?", answer: "폴리에스터" },
+      { q: "신축성이 매우 우수하여 수영복이나 에어로빅복에 쓰이는 섬유는?", answer: "폴리우레탄" },
+      { q: "모(양모)의 대용으로 쓰이며 가볍고 따뜻한 니트용 합성섬유는?", answer: "아크릴" }
+    ];
+
+    let score = 0;
+    let lives = 3;
+    let stage = 1;
+    let timeLeft = 60;
+    let moleUpTime = 1000; // ms
+    let gameTimer = null;
+    let molePopTimer = null;
+    let isPaused = false;
+    let playerName = "학생";
+    let difficulty = "normal";
+    let wrongLogs = [];
+    let currentQuiz = null;
+    let activeMoles = new Array(9).fill(null); // stores active fiber info per hole
+    let moleTimeoutIds = new Array(9).fill(null);
+
+    // SVG Mole Graphics Factory
+    function getMoleSVG(isBomb = false) {
+      if (isBomb) {
+        return `
+          <svg class="mole-svg" viewBox="0 0 100 100">
+            <ellipse cx="50" cy="65" rx="35" ry="30" fill="#374151" />
+            <circle cx="50" cy="40" r="28" fill="#1f2937" />
+            <circle cx="40" cy="35" r="4" fill="#ef4444" />
+            <circle cx="60" cy="35" r="4" fill="#ef4444" />
+            <path d="M 42 52 Q 50 45 58 52" stroke="#ffffff" stroke-width="3" fill="none" />
+            <circle cx="50" cy="12" r="6" fill="#f59e0b" />
+            <line x1="50" y1="18" x2="50" y2="25" stroke="#f59e0b" stroke-width="3" />
+          </svg>`;
+      }
+      return `
+        <svg class="mole-svg" viewBox="0 0 100 100">
+          <ellipse cx="50" cy="65" rx="35" ry="30" fill="#9a3412" />
+          <circle cx="50" cy="40" r="28" fill="#c2410c" />
+          <ellipse cx="50" cy="45" rx="14" ry="10" fill="#fed7aa" />
+          <circle cx="50" cy="42" r="4" fill="#1e293b" />
+          <circle cx="40" cy="32" r="3" fill="#1e293b" />
+          <circle cx="60" cy="32" r="3" fill="#1e293b" />
+        </svg>`;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      buildGameBoard();
+      setupEventListeners();
+    });
+
+    function buildGameBoard() {
+      const board = document.getElementById('game-board');
+      board.innerHTML = '';
+      for (let i = 0; i < 9; i++) {
+        const hole = document.createElement('div');
+        hole.className = 'hole';
+        hole.dataset.index = i;
+
+        const mole = document.createElement('div');
+        mole.className = 'mole';
+        mole.id = `mole-${i}`;
+
+        hole.appendChild(mole);
+        hole.addEventListener('click', () => handleMoleClick(i));
+        board.appendChild(hole);
+      }
+    }
+
+    function setupEventListeners() {
+      document.getElementById('btn-start-game').addEventListener('click', startGame);
+      document.getElementById('btn-pause').addEventListener('click', togglePause);
+      document.getElementById('btn-hint').addEventListener('click', triggerHint);
+      document.getElementById('btn-restart').addEventListener('click', showStartScreen);
+      document.getElementById('btn-show-rank').addEventListener('click', showLeaderboard);
+      document.getElementById('btn-close-rank').addEventListener('click', () => {
+        document.getElementById('leaderboard-modal').classList.remove('active');
+      });
+      document.getElementById('btn-msg-close').addEventListener('click', () => {
+        document.getElementById('msg-modal').classList.remove('active');
+      });
+    }
+
+    function showStartScreen() {
+      switchScreen('start-screen');
+    }
+
+    function switchScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+    }
+
+    function showAlert(title, text) {
+      document.getElementById('msg-title').innerText = title;
+      document.getElementById('msg-text').innerText = text;
+      document.getElementById('msg-modal').classList.add('active');
+    }
+
+    function startGame() {
+      const nameInput = document.getElementById('player-name').value.trim();
+      playerName = nameInput || "익명 학생";
+      difficulty = document.getElementById('difficulty').value;
+
+      if (difficulty === 'easy') {
+        moleUpTime = 1500;
+        lives = 5;
+      } else if (difficulty === 'normal') {
+        moleUpTime = 1000;
+        lives = 3;
+      } else {
+        moleUpTime = 700;
+        lives = 2;
+      }
+
+      score = 0;
+      wrongLogs = [];
+      isPaused = false;
+
+      sound.init();
+      switchScreen('game-screen');
+      initStage(1);
+    }
+
+    function initStage(stageNum) {
+      stage = stageNum;
+      timeLeft = 50 + (stageNum * 10);
+
+      updateHUD();
+      setupMissionText();
+      clearAllMoles();
+
+      clearInterval(gameTimer);
+      clearInterval(molePopTimer);
+
+      gameTimer = setInterval(timerTick, 1000);
+      scheduleNextMole();
+    }
+
+    function setupMissionText() {
+      const titleElem = document.getElementById('mission-title');
+      const textElem = document.getElementById('mission-text');
+
+      if (stage === 1) {
+        titleElem.innerText = "STAGE 1: 천연섬유 탐험";
+        textElem.innerText = "식물성 & 동물성 [천연섬유 (면, 마, 모, 견)] 두더지만 잡으세요!";
+      } else if (stage === 2) {
+        titleElem.innerText = "STAGE 2: 인조섬유 탐험";
+        textElem.innerText = "재생 & 합성 [인조섬유 (레이온, 나일론, 폴리에스터 등)] 두더지만 잡으세요!";
+      } else if (stage === 3) {
+        titleElem.innerText = "STAGE 3: 섬유 특성 퀴즈 마스터";
+        currentQuiz = QUIZ_QUESTIONS[Math.floor(Math.random() * QUIZ_QUESTIONS.length)];
+        textElem.innerText = `❓ 퀴즈: "${currentQuiz.q}"`;
+      }
+    }
+
+    function scheduleNextMole() {
+      if (isPaused) return;
+      const interval = Math.max(400, moleUpTime - 200);
+      molePopTimer = setTimeout(() => {
+        popMole();
+        scheduleNextMole();
+      }, interval);
+    }
+
+    function popMole() {
+      if (isPaused) return;
+
+      // Find available holes
+      const emptyHoles = [];
+      for (let i = 0; i < 9; i++) {
+        if (!activeMoles[i]) emptyHoles.push(i);
+      }
+      if (emptyHoles.length === 0) return;
+
+      const holeIdx = emptyHoles[Math.floor(Math.random() * emptyHoles.length)];
+      const moleElem = document.getElementById(`mole-${holeIdx}`);
+
+      // Determine fiber / bomb
+      let fiberData = null;
+      let isBomb = false;
+
+      // 15% Chance of Bomb in Stage 2 & 3
+      if (stage >= 2 && Math.random() < 0.15) {
+        isBomb = true;
+      } else {
+        fiberData = FIBER_DATA[Math.floor(Math.random() * FIBER_DATA.length)];
+      }
+
+      activeMoles[holeIdx] = { fiber: fiberData, isBomb: isBomb };
+
+      // Render Mole UI
+      let signHTML = isBomb ? `<div class="mole-sign">💣 폭탄</div>` : `<div class="mole-sign">${fiberData.icon} ${fiberData.name}</div>`;
+      moleElem.innerHTML = signHTML + getMoleSVG(isBomb);
+      moleElem.classList.add('up');
+
+      // Auto hide timeout
+      moleTimeoutIds[holeIdx] = setTimeout(() => {
+        hideMole(holeIdx);
+      }, moleUpTime);
+    }
+
+    function hideMole(holeIdx) {
+      const moleElem = document.getElementById(`mole-${holeIdx}`);
+      if (moleElem) {
+        moleElem.classList.remove('up', 'hit');
+      }
+      activeMoles[holeIdx] = null;
+      if (moleTimeoutIds[holeIdx]) {
+        clearTimeout(moleTimeoutIds[holeIdx]);
+        moleTimeoutIds[holeIdx] = null;
+      }
+    }
+
+    function clearAllMoles() {
+      for (let i = 0; i < 9; i++) {
+        hideMole(i);
+      }
+    }
+
+    function handleMoleClick(holeIdx) {
+      if (isPaused) return;
+      const moleData = activeMoles[holeIdx];
+      if (!moleData) return; // No mole or already hit
+
+      const moleElem = document.getElementById(`mole-${holeIdx}`);
+      moleElem.classList.add('hit');
+
+      if (moleData.isBomb) {
+        // Bomb Hit Penalty
+        sound.playHitWrong();
+        score = Math.max(0, score - 100);
+        lives -= 1;
+      } else {
+        const fiber = moleData.fiber;
+        let isCorrect = false;
+
+        if (stage === 1 && fiber.category === 'natural') isCorrect = true;
+        if (stage === 2 && fiber.category === 'synthetic') isCorrect = true;
+        if (stage === 3 && currentQuiz && fiber.name === currentQuiz.answer) isCorrect = true;
+
+        if (isCorrect) {
+          sound.playHitCorrect();
+          score += 100;
+          if (stage === 3) {
+            score += 50;
+            setupMissionText(); // Change question
+          }
+
+          // Stage Progression Logic
+          if (score >= stage * 300) {
+            sound.playStageClear();
+            if (stage < 3) {
+              initStage(stage + 1);
+              return;
+            } else {
+              finishGame(true);
+              return;
+            }
+          }
+        } else {
+          // Wrong Mole Hit
+          sound.playHitWrong();
+          score = Math.max(0, score - 50);
+          lives -= 1;
+
+          wrongLogs.push({
+            stage: stage,
+            fiber: fiber,
+            reason: stage === 3 ? `정답: ${currentQuiz.answer}` : `${fiber.category === 'natural' ? '천연' : '인조'}섬유를 오타격함`
+          });
+        }
+      }
+
+      hideMole(holeIdx);
+      updateHUD();
+
+      if (lives <= 0) {
+        finishGame(false);
+      }
+    }
+
+    function timerTick() {
+      if (isPaused) return;
+      timeLeft--;
+      document.getElementById('hud-timer').innerText = timeLeft;
+
+      if (timeLeft <= 0) {
+        finishGame(score >= stage * 300);
+      }
+    }
+
+    function triggerHint() {
+      if (score < 50) {
+        showAlert("힌트 불가", "힌트를 사용하려면 최소 50점이 필요합니다.");
+        return;
+      }
+      score -= 50;
+      sound.playHint();
+      updateHUD();
+
+      // Highlight active correct mole
+      for (let i = 0; i < 9; i++) {
+        if (activeMoles[i] && !activeMoles[i].isBomb) {
+          const fiber = activeMoles[i].fiber;
+          let isCorrect = false;
+          if (stage === 1 && fiber.category === 'natural') isCorrect = true;
+          if (stage === 2 && fiber.category === 'synthetic') isCorrect = true;
+          if (stage === 3 && currentQuiz && fiber.name === currentQuiz.answer) isCorrect = true;
+
+          if (isCorrect) {
+            const moleElem = document.getElementById(`mole-${i}`);
+            moleElem.style.border = "4px solid #10b981";
+            setTimeout(() => { moleElem.style.border = "none"; }, 1000);
+            break;
+          }
+        }
+      }
+    }
+
+    function togglePause() {
+      isPaused = !isPaused;
+      const pauseBtn = document.getElementById('btn-pause');
+      if (isPaused) {
+        pauseBtn.innerText = "▶ 계속하기";
+      } else {
+        pauseBtn.innerText = "⏸️ 일시정지";
+      }
+    }
+
+    function updateHUD() {
+      document.getElementById('hud-stage').innerText = `LV ${stage}`;
+      document.getElementById('hud-score').innerText = score;
+      document.getElementById('hud-lives').innerText = '❤️'.repeat(Math.max(0, lives));
+      document.getElementById('hud-timer').innerText = timeLeft;
+    }
+
+    function finishGame(isSuccess) {
+      clearInterval(gameTimer);
+      clearTimeout(molePopTimer);
+      clearAllMoles();
+
+      if (isSuccess) {
+        sound.playStageClear();
+      } else {
+        sound.playGameOver();
+      }
+
+      let grade = 'C';
+      if (score >= 900) grade = 'S';
+      else if (score >= 700) grade = 'A';
+      else if (score >= 500) grade = 'B';
+
+      document.getElementById('result-player-info').innerText = `학생: ${playerName} (${difficulty.toUpperCase()})`;
+      document.getElementById('result-grade').innerText = isSuccess ? grade : 'F';
+      document.getElementById('result-score').innerText = score;
+
+      const reviewContainer = document.getElementById('review-list');
+      reviewContainer.innerHTML = '';
+
+      if (wrongLogs.length === 0 && isSuccess) {
+        reviewContainer.innerHTML = `<div style="text-align:center; color: var(--success); font-weight:bold; padding: 12px;">🎉 오답 없이 완벽하게 통과했습니다!</div>`;
+      } else {
+        wrongLogs.forEach(log => {
+          const itemDiv = document.createElement('div');
+          itemDiv.className = 'review-item';
+          itemDiv.innerHTML = `
+            <div><span class="wrong-tag">[실수]</span> <strong>${log.fiber.name}</strong> (${log.fiber.category === 'natural' ? '천연섬유' : '인조섬유'})</div>
+            <div style="color: var(--text-muted); margin-top: 2px;">💡 특징: ${log.fiber.desc}</div>
+          `;
+          reviewContainer.appendChild(itemDiv);
+        });
+
+        const summaryHeader = document.createElement('div');
+        summaryHeader.style.cssText = "font-weight:bold; margin-top:12px; margin-bottom:6px;";
+        summaryHeader.innerText = "📌 핵심 섬유 특성 요약";
+        reviewContainer.appendChild(summaryHeader);
+
+        FIBER_DATA.slice(0, 5).forEach(f => {
+          const card = document.createElement('div');
+          card.className = 'review-item';
+          card.innerHTML = `<strong>${f.icon} ${f.name}</strong>: ${f.desc}`;
+          reviewContainer.appendChild(card);
+        });
+      }
+
+      saveScore(playerName, score, difficulty);
+      switchScreen('result-screen');
+    }
+
+    function saveScore(name, scoreVal, diff) {
+      try {
+        let board = JSON.parse(localStorage.getItem('fiber_mole_scores') || '[]');
+        board.push({
+          name: name,
+          score: scoreVal,
+          diff: diff,
+          date: new Date().toLocaleDateString()
+        });
+        board.sort((a, b) => b.score - a.score);
+        board = board.slice(0, 10);
+        localStorage.setItem('fiber_mole_scores', JSON.stringify(board));
+      } catch (e) {
+        console.warn("localStorage quota or access restricted.", e);
+      }
+    }
+
+    function showLeaderboard() {
+      let board = [];
+      try {
+        board = JSON.parse(localStorage.getItem('fiber_mole_scores') || '[]');
+      } catch (e) {
+        board = [];
+      }
+
+      const tbody = document.getElementById('leaderboard-body');
+      tbody.innerHTML = '';
+
+      if (board.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">등록된 기록이 없습니다.</td></tr>`;
+      } else {
+        board.slice(0, 5).forEach((entry, idx) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${idx + 1}위</td>
+            <td>${escapeHtml(entry.name)}</td>
+            <td><strong>${entry.score}</strong></td>
+            <td>${entry.diff}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      document.getElementById('leaderboard-modal').classList.add('active');
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+  </script>
+</body>
+</html>
